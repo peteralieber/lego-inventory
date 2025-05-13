@@ -5,7 +5,6 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
 	"features": {
-		"devwasm.azurecr.io/dev-wasm/dev-wasm-feature/rust-wasi:0": {},
 		"ghcr.io/devcontainers/features/desktop-lite:1": {},
 		"ghcr.io/devcontainers/features/rust:1": {}
 	}
