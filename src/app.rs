@@ -236,6 +236,8 @@ pub struct TemplateApp {
     new_part_color_category: Option<ColorCategory>,
     new_part_type_category: Option<TypeCategory>,
     new_part_quantity: String,
+    new_part_custom_color: String,
+    show_custom_color_input: bool,
 
     // Organization settings
     organization_mode: OrganizationMode,
@@ -254,6 +256,8 @@ impl Default for TemplateApp {
             new_part_color_category: None,
             new_part_type_category: None,
             new_part_quantity: "1".to_string(),
+            new_part_custom_color: String::new(),
+            show_custom_color_input: false,
             organization_mode: OrganizationMode::ByColor,
             show_empty_categories: false,
             search_query: String::new(),
@@ -277,20 +281,40 @@ impl TemplateApp {
     }
 
     fn add_part(&mut self) {
-        let quantity = self.new_part_quantity.parse::<u32>().unwrap_or(1);
-        if quantity > 0 && !self.new_part_name.is_empty() {
-            self.parts.push(LegoPart {
-                name: self.new_part_name.clone(),
-                color: self.new_part_color.clone(),
-                color_category: self.new_part_color_category.clone(),
-                type_category: self.new_part_type_category.clone(),
-                quantity,
-            });
-
-            // Reset form
-            self.new_part_name.clear();
-            self.new_part_quantity = "1".to_string();
+        let quantity = match self.new_part_quantity.parse::<u32>() {
+            Ok(q) if q > 0 => q,
+            _ => {
+                // Invalid quantity - we'll add validation feedback in the UI
+                return;
+            }
+        };
+        
+        if self.new_part_name.is_empty() {
+            return;
         }
+
+        let color = if self.show_custom_color_input && !self.new_part_custom_color.is_empty() {
+            LegoColor::Custom(self.new_part_custom_color.clone())
+        } else {
+            self.new_part_color.clone()
+        };
+
+        self.parts.push(LegoPart {
+            name: self.new_part_name.clone(),
+            color,
+            color_category: self.new_part_color_category.clone(),
+            type_category: self.new_part_type_category.clone(),
+            quantity,
+        });
+
+        // Reset all form fields
+        self.new_part_name.clear();
+        self.new_part_color = LegoColor::Black;
+        self.new_part_color_category = None;
+        self.new_part_type_category = None;
+        self.new_part_quantity = "1".to_string();
+        self.new_part_custom_color.clear();
+        self.show_custom_color_input = false;
     }
 
     fn remove_part(&mut self, index: usize) {
@@ -347,8 +371,12 @@ impl TemplateApp {
             return;
         }
 
-        for color in LegoColor::all_standard_colors() {
-            if let Some(categories) = parts_by_color.get(&color) {
+        // Collect all colors that have parts (including custom colors)
+        let mut colors_with_parts: Vec<_> = parts_by_color.keys().collect();
+        colors_with_parts.sort_by_key(|color| format!("{}", color));
+
+        for color in colors_with_parts {
+            if let Some(categories) = parts_by_color.get(color) {
                 ui.collapsing(
                     format!(
                         "🎨 {} ({} parts)",
@@ -381,6 +409,17 @@ impl TemplateApp {
                                             }
                                         });
                                     }
+                                });
+                            } else if self.show_empty_categories {
+                                ui.group(|ui| {
+                                    ui.strong(format!("{}", category));
+                                    ui.label(
+                                        egui::RichText::new(category.description())
+                                            .small()
+                                            .italics(),
+                                    );
+                                    ui.separator();
+                                    ui.label(egui::RichText::new("(empty)").italics().weak());
                                 });
                             }
                         }
