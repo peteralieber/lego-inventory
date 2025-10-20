@@ -288,7 +288,7 @@ impl TemplateApp {
                 return;
             }
         };
-        
+
         if self.new_part_name.is_empty() {
             return;
         }
@@ -577,17 +577,28 @@ impl eframe::App for TemplateApp {
 
                 ui.horizontal(|ui| {
                     ui.label("Color:");
-                    egui::ComboBox::from_id_salt("color_selector")
-                        .selected_text(format!("{}", self.new_part_color))
-                        .show_ui(ui, |ui| {
-                            for color in LegoColor::all_standard_colors() {
-                                ui.selectable_value(
-                                    &mut self.new_part_color,
-                                    color.clone(),
-                                    format!("{}", color),
-                                );
-                            }
-                        });
+                    if !self.show_custom_color_input {
+                        egui::ComboBox::from_id_salt("color_selector")
+                            .selected_text(format!("{}", self.new_part_color))
+                            .show_ui(ui, |ui| {
+                                for color in LegoColor::all_standard_colors() {
+                                    ui.selectable_value(
+                                        &mut self.new_part_color,
+                                        color.clone(),
+                                        format!("{}", color),
+                                    );
+                                }
+                            });
+                        if ui.small_button("+ Custom").clicked() {
+                            self.show_custom_color_input = true;
+                        }
+                    } else {
+                        ui.text_edit_singleline(&mut self.new_part_custom_color);
+                        if ui.small_button("Standard").clicked() {
+                            self.show_custom_color_input = false;
+                            self.new_part_custom_color.clear();
+                        }
+                    }
                 });
 
                 ui.horizontal(|ui| {
@@ -636,6 +647,21 @@ impl eframe::App for TemplateApp {
                     ui.label("Quantity:");
                     ui.text_edit_singleline(&mut self.new_part_quantity);
                 });
+
+                // Show validation feedback for quantity
+                if !self.new_part_quantity.is_empty() {
+                    if self.new_part_quantity.parse::<u32>().is_err() {
+                        ui.label(
+                            egui::RichText::new("⚠ Please enter a valid positive number")
+                                .color(egui::Color32::from_rgb(255, 100, 100)),
+                        );
+                    } else if self.new_part_quantity.parse::<u32>().unwrap_or(0) == 0 {
+                        ui.label(
+                            egui::RichText::new("⚠ Quantity must be greater than 0")
+                                .color(egui::Color32::from_rgb(255, 100, 100)),
+                        );
+                    }
+                }
 
                 if ui.button("➕ Add Part").clicked() {
                     self.add_part();
