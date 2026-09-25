@@ -37,7 +37,7 @@ cargo run --release
    trunk serve
    ```
 
-Then open `http://127.0.0.1:8080/index.html#dev` in your browser.
+Then open `http://127.0.0.1:8080/index.html#dev` in your browser. The `#dev` suffix bypasses the service worker cache so you see the latest local build while developing.
 
 ## Documentation
 
