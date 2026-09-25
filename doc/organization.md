@@ -96,7 +96,7 @@ graph TD
     U --> V[Fallback to Basic or Modified if no strong match exists]
 ```
 
-Example: if the dark tan inventory has no slope pieces, merge `Slopes` into `Cutoff` or `Basic`, depending on which grouping is more intuitive for browsing.
+Example: if the dark tan inventory has no slope pieces, merge `Slopes` into `Cutoff`. Only fall back to `Basic` if `Cutoff` is also too sparse to justify a separate group.
 
 ## Sample storage layout
 
